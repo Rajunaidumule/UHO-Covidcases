@@ -1,0 +1,27 @@
+#%RAML 1.0 Library
+usage:
+types:
+    error-response-type:
+      type: object
+      description: This type is for used to provide detailed information about the error occured in  generic matter.All APIS should incorporate this object
+      properties:
+        code:
+          type: integer
+          description: code of the error,can be internal error code specific to the working of the API that can be refered by additional documentation field
+          required: true
+        message:
+          type: string
+          description: A human readable message that describes the error/ exception occured
+          required: true
+        description:
+          type: string
+          description: A human readable comprehensive explanation of the occured exception
+          required: true
+        dateTime:
+          type: datetime
+          description: the datetime stamp of the occured error
+          required: true
+        transactionId:
+          type: string
+          description: Internal identifier of the transcation that failed
+          required: true

@@ -1,0 +1,140 @@
+#%RAML 1.0
+title: uhub-sapi
+baseUri: https://uho-{env}-uhub-sapi/covid/v1
+securitySchemes:
+  Oauth: !include /exchange_modules/6a380730-bd0f-4cb1-b21a-80073e10cafa/uho-oauth20-security-schemas/1.0.0/uho-oauth20-security-schemas.raml
+traits:
+  correlation-id: !include /exchange_modules/6a380730-bd0f-4cb1-b21a-80073e10cafa/x-correlation-id/1.0.0/x-correlation-id.raml
+  transaction-id: !include /exchange_modules/6a380730-bd0f-4cb1-b21a-80073e10cafa/x-transacation-id/1.0.0/x-transacation-id.raml
+  covid report state query param: !include /traits/state wise report.raml
+uses:
+  uhub-sapi-datatypes: common-libraries-for-datatypes/common-datatypes-library.raml
+  global error handling: exchange_modules/6a380730-bd0f-4cb1-b21a-80073e10cafa/common-error-data-library/1.0.0/common-error-data-library.raml
+/cases:
+  post:
+    description: this resource used to register a covid case
+    is: [correlation-id,transaction-id]
+    body: 
+      application/json:
+        type: uhub-sapi-datatypes.register covid case request data type
+        example: !include /examples for uhub-sapi/register-covid-case-request-payload.json          
+    responses:
+      200:
+        body:
+          application/json:
+            type: uhub-sapi-datatypes.register covid case response data type
+            example: !include /examples for uhub-sapi/register-covid-case-response-payload.json              
+      503:
+        body:
+          application/json:
+            type: global error handling.error-response-type            
+            example: !include /examples for uhub-sapi/503 error handler.json                  
+      400:
+        body:
+          application/json:
+            type: global error handling.error-response-type            
+            example: !include /examples for uhub-sapi/400 error handler example.json
+      500:
+        body:
+          application/json:
+            type: global error handling.error-response-type           
+            example: !include /examples for uhub-sapi/500 error handler example.json
+  put:
+    description: this resource is used to update a covid case
+    is: [correlation-id,transaction-id]
+    body:
+      application/xml:
+        type: uhub-sapi-datatypes.update covid case request data type  
+        example: !include /examples for uhub-sapi/update-covid-case-request-payload.xml
+    responses:
+      200:
+        body:
+          application/xml:
+            xml:
+              name: response
+            type: uhub-sapi-datatypes.update covid case response type
+            
+            example: !include /examples for uhub-sapi/update-covidcase-response-paylaod.xml
+      400:
+        body:
+          application/xml:
+            type: uhub-sapi-datatypes.update-covid-case-error-response-type-xml
+            example: !include /examples for uhub-sapi/400 error handler-xml.xml
+      503:
+        body:
+          application/xml:
+            type: uhub-sapi-datatypes.update-covid-case-error-response-type-xml
+            example: !include /examples for uhub-sapi/503 error-handler-xml.xml
+      500:
+        body:
+          application/xml:
+            type: uhub-sapi-datatypes.update-covid-case-error-response-type-xml
+            
+            example: !include /examples for uhub-sapi/500 error handler-xml.xml             
+  /{nationalID}:
+    get:
+      description: to get covid cases by national ID
+      is: [correlation-id,transaction-id]
+      responses:
+        200:
+          body:
+            application/json:
+              type: array
+              items:
+                type: uhub-sapi-datatypes.get covid reports by national id
+                
+              example: !include /examples for uhub-sapi/get-covid-case-by-nationalid-response-payload.json
+                
+        500:
+          body:
+            application/json:
+              type: global error handling.error-response-type
+              example: !include /examples for uhub-sapi/500 error handler example.json
+                
+        404:
+          body:
+            application/json:
+              type: global error handling.error-response-type
+              example: !include /examples for uhub-sapi/400 error handler example.json
+        503:
+          body:
+            application/json:
+              type: global error handling.error-response-type
+              example: !include /examples for uhub-sapi/503 error handler.json
+                
+/reports:
+  get:
+    is: [correlation-id,transaction-id,covid report state query param]
+    responses:
+      200:
+        body:
+          application/json:
+            type: array
+            items:
+              type: uhub-sapi-datatypes.get covid reports by state
+              
+            example: !include /examples for uhub-sapi/get-covid-report-statewise-success-response.json
+                     
+      503:
+        body:
+          application/json:
+            type: global error handling.error-response-type
+            
+            example: !include /examples for uhub-sapi/503 error handler.json             
+      500:
+        body:
+          application/json:
+            type: global error handling.error-response-type
+            example: !include /examples for uhub-sapi/500 error handler example.json
+/health-check:    
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              {
+                "message": "uhub-sapi is alive and kicking"
+              }
+                                    
+                

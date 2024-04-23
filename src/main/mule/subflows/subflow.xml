@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<sub-flow name="insert-covid-case-into-database" doc:id="a9574a7c-3bed-4807-aa49-22bd29f79cc8" >
+		<logger level="DEBUG" doc:name="Start Log" doc:id="bbc2a2a6-0313-49a6-8fa6-dbcfa865ef64" message='#["before insert covid case database call"]'/>
+		<db:stored-procedure doc:id="d00e8f80-376a-49fa-a134-d6284d8d15e9" config-ref="Database_Config" doc:name="Stored procedure">
+			<db:sql><![CDATA[{call insert_covid_master(:source, :case_type, :first_name, :last_name, :phone, :email, :date_of_birth, :national_id, :national_id_type, :street_address, :city, :state, :postal, :country, :create_date, :update_date, :create_by, :update_by, :case_id)}]]></db:sql>
+			<db:input-parameters><![CDATA[#[vars.covidPayload]]]></db:input-parameters>
+			<db:output-parameters>
+				<db:output-parameter key="case_id" type="NUMERIC" />
+			</db:output-parameters>
+		</db:stored-procedure>
+		<logger level="DEBUG" doc:name="End Log" doc:id="546c9f5b-b3dd-42a3-9f87-8d2492ea5556" message='#["after insert covid case database call"]'/>
+	</sub-flow>
+</mule>

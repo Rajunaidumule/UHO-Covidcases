@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="get:\cases\(nationalID):uhub-sapi-config">
+		<ee:transform doc:name="Transform Message1" doc:id="ce0f8448-d1df-46a7-8f89-4be6d6678dc5" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="correlationId" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.headers.'x-correlation-id' default payload.covidCase.caseID]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="8e29cd98-1053-4450-9103-f3993531817b" message='transactionID: #[vars.transactionId], correlationID: #[vars.correlationId], message: "Started update covid case flow", payload: #[payload]' />
+		<set-variable value="#[attributes.uriParams.nationalID]" doc:name="Set Variable" doc:id="2e08aa00-317c-4a9b-a9c2-a42df5bfe50b" variableName="nationalId" />
+		<db:select doc:name="Select" doc:id="92e14ef6-e97e-4556-b49d-4ea4565a308a" config-ref="Database_Config" >
+			<db:sql ><![CDATA[select case_id, source, case_type, first_name, last_name, phone, email, date_of_birth, national_id, national_id_type, street_address, city, state, postal, country, create_date, update_date, create_by, update_by from cvd_case_master where national_id=:national_id  ]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	national_id: vars.nationalId
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="9adcf162-c00b-49a3-bdb9-a033050138ce" >
+			<when expression="#[sizeOf(payload) &gt;0]" >
+				<ee:transform doc:name="Set Success Response" doc:id="cd265f01-a32c-43cb-aa06-d6ed6f95c6f1" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map(covidCase, indexOfCovidCase)-> {
+	caseID: covidCase.case_id,
+	source: covidCase.source,
+	case_type: covidCase.case_type,
+	first_name: covidCase.first_name,
+	last_name: covidCase.last_name,
+	phone: covidCase.phone,
+	email: covidCase.email,
+	date_of_birth: covidCase.national_id,
+	national_id_type: covidCase.national_id_type,
+	street_address: covidCase.street_address,
+	city: covidCase.city,
+	state: covidCase.state,
+	postal: covidCase.postal,
+	country: covidCase.country,
+	create_date: covidCase.create_date,
+	update_date: covidCase.update_date,
+	create_by: covidCase.crete_by,
+	update_by: covidCase.update_by
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error" doc:id="33929ffe-3ac5-4933-aba4-b12d5ec295af" type="CUSTOM:DATA_NOT_AVAILABLE" description="Data not available" />
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger1" doc:id="751ae932-2fa8-4049-ba33-db038c483919" message="flow completed" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="bcfd3df0-d70c-47ca-850b-e2a439f776fe" type="CUSTOM:DATA_NOT_AVAILABLE" >
+				<ee:transform doc:name="Set Not Found Response" doc:id="ac3f9744-8340-45e7-9805-e512d46a6337" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"code": 404,
+	"message": "Resource not found",
+	"description": error.description,
+	"date-time": now()as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"},
+	"x-transaction-id": vars.transactionId
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[404]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+    
+</flow></mule>
